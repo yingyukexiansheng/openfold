@@ -34,6 +34,12 @@ ROOT_DIR="${DOWNLOAD_DIR}"
 SOURCE_URL="http://wwwuser.gwdg.de/~compbiol/colabfold/uniref30_2103.tar.gz"
 BASENAME=$(basename "${SOURCE_URL}")
 
+
 mkdir --parents "${ROOT_DIR}"
-aria2c "${SOURCE_URL}" --dir="${ROOT_DIR}" -x 4 --check-certificate=false
+
+# aria2c "${SOURCE_URL}" --dir="${ROOT_DIR}" -x 4 --check-certificate=false
+
+
 gunzip "${ROOT_DIR}/${BASENAME}"
+echo "gun zip finish"
+

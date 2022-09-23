@@ -232,6 +232,7 @@ class AlphaFold(nn.Module):
         # Controls whether the model uses in-place operations throughout
         # The dual condition accounts for activation checkpoints
         inplace_safe = not (self.training or torch.is_grad_enabled())
+        inplace_safe = False
 
         # Prep some features
         seq_mask = feats["seq_mask"]

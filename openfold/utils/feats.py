@@ -229,7 +229,7 @@ def torsion_angles_to_frames(
         ],
         dim=-1,
     )
-
+    d = r[..., None]
     all_frames_to_global = r[..., None].compose(all_frames_to_bb)
 
     return all_frames_to_global

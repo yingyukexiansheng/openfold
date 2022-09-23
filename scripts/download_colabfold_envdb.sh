@@ -35,4 +35,5 @@ SOURCE_URL="http://wwwuser.gwdg.de/~compbiol/colabfold/colabfold_envdb_202108.ta
 BASENAME=$(basename "${SOURCE_URL}")
 
 mkdir --parents "${ROOT_DIR}"
-aria2c "${SOURCE_URL}" --dir="${ROOT_DIR}" -x 4 --check-certificate=false
+
+# aria2c "${SOURCE_URL}" --dir="${ROOT_DIR}" -x 4 --check-certificate=false

@@ -663,7 +663,7 @@ class StructureModule(nn.Module):
         s = self.linear_in(s)
 
         # [*, N]
-        rigids = Rigid.identity(
+        rigids = Rigid.identity(  # 主链上变换框架
             s.shape[:-1], 
             s.dtype, 
             s.device, 

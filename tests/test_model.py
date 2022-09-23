@@ -103,7 +103,7 @@ class TestModel(unittest.TestCase):
         out_gt = alphafold.model.all_atom.atom37_to_atom14(out_gt, batch)
         out_gt = torch.as_tensor(np.array(out_gt.block_until_ready()))
 
-        batch["no_recycling_iters"] = np.array([3., 3., 3., 3.,])
+        batch["no_recycling_iters"] = np.array([3., 3., 3., 3., ])
         batch = {k: torch.as_tensor(v).cuda() for k, v in batch.items()}
 
         batch["aatype"] = batch["aatype"].long()
@@ -133,3 +133,52 @@ class TestModel(unittest.TestCase):
         print(torch.mean(torch.abs(out_gt - out_repro)))
         print(torch.max(torch.abs(out_gt - out_repro)))
         self.assertTrue(torch.max(torch.abs(out_gt - out_repro)) < 1e-3)
+
+
+def dry_run():
+    n_seq = consts.n_seq
+    n_templ = consts.n_templ
+    n_res = consts.n_res
+    n_extra_seq = consts.n_extra
+
+    c = model_config("model_1")
+    c.globals.use_lma = True
+    c.model.evoformer_stack.no_blocks = 4  # no need to go overboard here
+    c.model.evoformer_stack.blocks_per_ckpt = None  # don't want to set up
+    # deepspeed for this test
+
+    model = AlphaFold(c)
+    model.eval()
+
+    batch = {}
+    tf = torch.randint(c.model.input_embedder.tf_dim - 1, size=(n_res,))
+    batch["target_feat"] = nn.functional.one_hot(
+        tf, c.model.input_embedder.tf_dim
+    ).float()
+    batch["aatype"] = torch.argmax(batch["target_feat"], dim=-1)
+    batch["residue_index"] = torch.arange(n_res)
+    batch["msa_feat"] = torch.rand((n_seq, n_res, c.model.input_embedder.msa_dim))
+    t_feats = random_template_feats(n_templ, n_res)
+    batch.update({k: torch.tensor(v) for k, v in t_feats.items()})
+    extra_feats = random_extra_msa_feats(n_extra_seq, n_res)
+    batch.update({k: torch.tensor(v) for k, v in extra_feats.items()})
+    batch["msa_mask"] = torch.randint(
+        low=0, high=2, size=(n_seq, n_res)
+    ).float()
+    batch["seq_mask"] = torch.randint(low=0, high=2, size=(n_res,)).float()
+    batch.update(data_transforms.make_atom14_masks(batch))
+    batch["no_recycling_iters"] = torch.tensor(2.)
+
+    add_recycling_dims = lambda t: (
+        t.unsqueeze(-1).expand(*t.shape, c.data.common.max_recycling_iters)
+    )
+    batch = tensor_tree_map(add_recycling_dims, batch)
+
+    with torch.no_grad():
+        print(torch.is_grad_enabled())
+        out = model(batch)
+        print(out)
+
+
+if __name__ == "__main__":
+    dry_run()
